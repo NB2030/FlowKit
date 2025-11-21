@@ -43,15 +43,16 @@ func _on_scene_changed(scene_root: Node) -> void:
 		print("[FlowKit] Scene cleared.")
 		return
 
-	print("[FlowKit] Scene detected:", scene_root.name)
-	_load_sheet_for_scene(scene_root)
+	var scene_path: String = scene_root.scene_file_path
+	var scene_name: String = scene_path.get_file().get_basename()
+	print("[FlowKit] Scene detected:", scene_name, " (", scene_root.name, ")")
+	_load_sheet_for_scene(scene_name)
 
 
-func _load_sheet_for_scene(scene_root: Node) -> void:
+func _load_sheet_for_scene(scene_name: String) -> void:
 	# Clear previous sheet(s)
 	active_sheets.clear()
 
-	var scene_name: String = scene_root.name
 	var sheet_path: String = "res://addons/flowkit/saved/event_sheet/%s.tres" % scene_name
 
 	# Debug: show whether the file exists
