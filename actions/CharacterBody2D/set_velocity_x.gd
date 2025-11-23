@@ -21,4 +21,4 @@ func execute(node: Node, inputs: Dictionary) -> void:
 	var body: CharacterBody2D = node as CharacterBody2D
 	var x: float = float(inputs.get("X", 0))
 	
-	body.velocity.x += x
+	body.velocity.x = x

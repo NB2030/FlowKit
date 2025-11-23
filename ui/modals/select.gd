@@ -47,6 +47,15 @@ func populate_from_scene(scene_root: Node) -> void:
 	
 	item_list.clear()
 	
+	# Add System option at the top
+	item_list.add_item("System")
+	var system_index = item_list.item_count - 1
+	item_list.set_item_metadata(system_index, "System")
+	if editor_interface:
+		var icon = editor_interface.get_base_control().get_theme_icon("Node", "EditorIcons")
+		if icon:
+			item_list.set_item_icon(system_index, icon)
+	
 	if not scene_root:
 		return
 	
@@ -116,6 +125,14 @@ func _on_item_activated(index: int) -> void:
 		return
 	
 	var node_path_str = item_list.get_item_metadata(index)
+	
+	# Handle System node
+	if node_path_str == "System":
+		print("Node selected: System (System)")
+		node_selected.emit("System", "System")
+		hide()
+		return
+	
 	var node = _get_node_from_path(node_path_str)
 	if node:
 		var node_class = node.get_class()

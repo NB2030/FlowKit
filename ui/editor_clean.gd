@@ -102,11 +102,18 @@ func _clear_all_blocks() -> void:
 			child.queue_free()
 
 func _show_empty_state() -> void:
-	"""Show empty state UI."""
+	"""Show empty state UI (no scene loaded)."""
 	empty_label.visible = true
 	add_event_btn.visible = false
 	add_condition_btn.visible = false
 	add_action_btn.visible = false
+
+func _show_empty_blocks_state() -> void:
+	"""Show state when scene is loaded but has no blocks."""
+	empty_label.visible = false
+	add_event_btn.visible = true
+	add_condition_btn.visible = true
+	add_action_btn.visible = true
 
 func _show_content_state() -> void:
 	"""Show content state UI."""
@@ -129,12 +136,12 @@ func _load_scene_sheet() -> void:
 	
 	var sheet_path = _get_sheet_path()
 	if sheet_path == "" or not FileAccess.file_exists(sheet_path):
-		_show_empty_state()
+		_show_empty_blocks_state()
 		return
 	
 	var sheet = ResourceLoader.load(sheet_path)
 	if not (sheet is FKEventSheet):
-		_show_empty_state()
+		_show_empty_blocks_state()
 		return
 	
 	_populate_from_sheet(sheet)
@@ -375,13 +382,13 @@ func _on_node_selected(node_path: String, node_class: String) -> void:
 	select_node_modal.hide()
 	
 	match pending_block_type:
-		"event":
+		"event", "event_replace":
 			select_event_modal.populate_events(node_path, node_class)
 			select_event_modal.popup_centered()
-		"condition":
+		"condition", "condition_replace":
 			select_condition_modal.populate_conditions(node_path, node_class)
 			select_condition_modal.popup_centered()
-		"action":
+		"action", "action_replace":
 			select_action_modal.populate_actions(node_path, node_class)
 			select_action_modal.popup_centered()
 
@@ -394,7 +401,10 @@ func _on_event_selected(node_path: String, event_id: String, inputs: Array) -> v
 		expression_modal.populate_inputs(node_path, event_id, inputs)
 		expression_modal.popup_centered()
 	else:
-		_finalize_event_creation({})
+		if pending_block_type == "event_replace":
+			_replace_event({})
+		else:
+			_finalize_event_creation({})
 
 func _on_condition_selected(node_path: String, condition_id: String, inputs: Array) -> void:
 	"""Condition type selected."""
@@ -405,7 +415,10 @@ func _on_condition_selected(node_path: String, condition_id: String, inputs: Arr
 		expression_modal.populate_inputs(node_path, condition_id, inputs)
 		expression_modal.popup_centered()
 	else:
-		_finalize_condition_creation({})
+		if pending_block_type == "condition_replace":
+			_replace_condition({})
+		else:
+			_finalize_condition_creation({})
 
 func _on_action_selected(node_path: String, action_id: String, inputs: Array) -> void:
 	"""Action type selected."""
@@ -416,7 +429,10 @@ func _on_action_selected(node_path: String, action_id: String, inputs: Array) ->
 		expression_modal.populate_inputs(node_path, action_id, inputs)
 		expression_modal.popup_centered()
 	else:
-		_finalize_action_creation({})
+		if pending_block_type == "action_replace":
+			_replace_action({})
+		else:
+			_finalize_action_creation({})
 
 func _on_expressions_confirmed(_node_path: String, _id: String, expressions: Dictionary) -> void:
 	"""Expressions entered."""
@@ -435,6 +451,12 @@ func _on_expressions_confirmed(_node_path: String, _id: String, expressions: Dic
 			_update_condition_inputs(expressions)
 		"action_edit":
 			_update_action_inputs(expressions)
+		"event_replace":
+			_replace_event(expressions)
+		"condition_replace":
+			_replace_condition(expressions)
+		"action_replace":
+			_replace_action(expressions)
 
 func _finalize_event_creation(inputs: Dictionary) -> void:
 	"""Create and add event block."""
@@ -524,6 +546,90 @@ func _update_action_inputs(expressions: Dictionary) -> void:
 			pending_target_node.update_display()
 	_reset_workflow()
 
+func _replace_event(expressions: Dictionary) -> void:
+	"""Replace existing event block with new type."""
+	if not pending_target_node:
+		_reset_workflow()
+		return
+	
+	# Get old block's position and conditions/actions
+	var old_data = pending_target_node.get_event_data()
+	var old_index = pending_target_node.get_index()
+	
+	# Create new event data
+	var new_data = FKEventBlock.new()
+	new_data.event_id = pending_id
+	new_data.target_node = pending_node_path
+	new_data.inputs = expressions
+	new_data.conditions = old_data.conditions if old_data else ([] as Array[FKEventCondition])
+	new_data.actions = old_data.actions if old_data else ([] as Array[FKEventAction])
+	
+	# Create new block
+	var new_node = _create_event_block(new_data)
+	
+	# Remove old block and insert new one at same position
+	blocks_container.remove_child(pending_target_node)
+	pending_target_node.queue_free()
+	blocks_container.add_child(new_node)
+	blocks_container.move_child(new_node, old_index)
+	
+	_reset_workflow()
+
+func _replace_condition(expressions: Dictionary) -> void:
+	"""Replace existing condition block with new type."""
+	if not pending_target_node:
+		_reset_workflow()
+		return
+	
+	# Get old block's position and actions
+	var old_data = pending_target_node.get_condition_data()
+	var old_index = pending_target_node.get_index()
+	
+	# Create new condition data
+	var new_data = FKEventCondition.new()
+	new_data.condition_id = pending_id
+	new_data.target_node = pending_node_path
+	new_data.inputs = expressions
+	new_data.negated = old_data.negated if old_data else false
+	new_data.actions = old_data.actions if old_data else ([] as Array[FKEventAction])
+	
+	# Create new block
+	var new_node = _create_condition_block(new_data)
+	
+	# Remove old block and insert new one at same position
+	blocks_container.remove_child(pending_target_node)
+	pending_target_node.queue_free()
+	blocks_container.add_child(new_node)
+	blocks_container.move_child(new_node, old_index)
+	
+	_reset_workflow()
+
+func _replace_action(expressions: Dictionary) -> void:
+	"""Replace existing action block with new type."""
+	if not pending_target_node:
+		_reset_workflow()
+		return
+	
+	# Get old block's position
+	var old_index = pending_target_node.get_index()
+	
+	# Create new action data
+	var new_data = FKEventAction.new()
+	new_data.action_id = pending_id
+	new_data.target_node = pending_node_path
+	new_data.inputs = expressions
+	
+	# Create new block
+	var new_node = _create_action_block(new_data)
+	
+	# Remove old block and insert new one at same position
+	blocks_container.remove_child(pending_target_node)
+	pending_target_node.queue_free()
+	blocks_container.add_child(new_node)
+	blocks_container.move_child(new_node, old_index)
+	
+	_reset_workflow()
+
 func _reset_workflow() -> void:
 	"""Clear workflow state."""
 	pending_block_type = ""
@@ -539,15 +645,25 @@ func _on_event_insert_condition(signal_node, bound_node) -> void:
 
 func _on_event_replace(signal_node, bound_node) -> void:
 	pending_target_node = bound_node
-	pending_block_type = "event"
-	# TODO: Implement replace
-	pass
+	pending_block_type = "event_replace"
+	
+	# Get current node path from the block being replaced
+	var data = bound_node.get_event_data()
+	if data:
+		pending_node_path = data.target_node
+	
+	# Open node selector
+	var scene_root = editor_interface.get_edited_scene_root()
+	if not scene_root:
+		return
+	
+	select_node_modal.set_editor_interface(editor_interface)
+	select_node_modal.populate_from_scene(scene_root)
+	select_node_modal.popup_centered()
 
 func _on_event_delete(signal_node, bound_node) -> void:
 	blocks_container.remove_child(bound_node)
 	bound_node.queue_free()
-	if _get_blocks().is_empty():
-		_show_empty_state()
 
 func _on_event_edit(signal_node, bound_node) -> void:
 	var data = bound_node.get_event_data()
@@ -584,15 +700,25 @@ func _on_condition_insert_condition(signal_node, bound_node) -> void:
 
 func _on_condition_replace(signal_node, bound_node) -> void:
 	pending_target_node = bound_node
-	pending_block_type = "condition"
-	# TODO: Implement replace
-	pass
+	pending_block_type = "condition_replace"
+	
+	# Get current node path from the block being replaced
+	var data = bound_node.get_condition_data()
+	if data:
+		pending_node_path = data.target_node
+	
+	# Open node selector
+	var scene_root = editor_interface.get_edited_scene_root()
+	if not scene_root:
+		return
+	
+	select_node_modal.set_editor_interface(editor_interface)
+	select_node_modal.populate_from_scene(scene_root)
+	select_node_modal.popup_centered()
 
 func _on_condition_delete(signal_node, bound_node) -> void:
 	blocks_container.remove_child(bound_node)
 	bound_node.queue_free()
-	if _get_blocks().is_empty():
-		_show_empty_state()
 
 func _on_condition_negate(signal_node, bound_node) -> void:
 	var data = bound_node.get_condition_data()
@@ -634,15 +760,25 @@ func _on_action_insert_action(signal_node, bound_node) -> void:
 
 func _on_action_replace(signal_node, bound_node) -> void:
 	pending_target_node = bound_node
-	pending_block_type = "action"
-	# TODO: Implement replace
-	pass
+	pending_block_type = "action_replace"
+	
+	# Get current node path from the block being replaced
+	var data = bound_node.get_action_data()
+	if data:
+		pending_node_path = data.target_node
+	
+	# Open node selector
+	var scene_root = editor_interface.get_edited_scene_root()
+	if not scene_root:
+		return
+	
+	select_node_modal.set_editor_interface(editor_interface)
+	select_node_modal.populate_from_scene(scene_root)
+	select_node_modal.popup_centered()
 
 func _on_action_delete(signal_node, bound_node) -> void:
 	blocks_container.remove_child(bound_node)
 	bound_node.queue_free()
-	if _get_blocks().is_empty():
-		_show_empty_state()
 
 func _on_action_edit(signal_node, bound_node) -> void:
 	var data = bound_node.get_action_data()

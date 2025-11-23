@@ -1,6 +1,9 @@
 extends Node
 class_name FKRegistry
 
+# Preload the expression evaluator
+const FKExpressionEvaluator = preload("res://addons/flowkit/runtime/expression_evaluator.gd")
+
 var action_providers: Array = []
 var condition_providers: Array = []
 var event_providers: Array = []
@@ -53,14 +56,18 @@ func poll_event(event_id: String, node: Node, inputs: Dictionary = {}) -> bool:
 	for provider in event_providers:
 		if provider.has_method("get_id") and provider.get_id() == event_id:
 			if provider.has_method("poll"):
-				return provider.poll(node, inputs)
+				# Evaluate expressions in inputs before polling
+				var evaluated_inputs: Dictionary = FKExpressionEvaluator.evaluate_inputs(inputs, node)
+				return provider.poll(node, evaluated_inputs)
 	return false
 
 func check_condition(condition_id: String, node: Node, inputs: Dictionary, negated: bool = false) -> bool:
 	for provider in condition_providers:
 		if provider.has_method("get_id") and provider.get_id() == condition_id:
 			if provider.has_method("check"):
-				var result = provider.check(node, inputs)
+				# Evaluate expressions in inputs before checking
+				var evaluated_inputs: Dictionary = FKExpressionEvaluator.evaluate_inputs(inputs, node)
+				var result = provider.check(node, evaluated_inputs)
 				return not result if negated else result
 	return false
 
@@ -68,5 +75,7 @@ func execute_action(action_id: String, node: Node, inputs: Dictionary) -> void:
 	for provider in action_providers:
 		if provider.has_method("get_id") and provider.get_id() == action_id:
 			if provider.has_method("execute"):
-				provider.execute(node, inputs)
+				# Evaluate expressions in inputs before executing
+				var evaluated_inputs: Dictionary = FKExpressionEvaluator.evaluate_inputs(inputs, node)
+				provider.execute(node, evaluated_inputs)
 				return

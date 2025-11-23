@@ -76,27 +76,41 @@ func _run_sheet(sheet: FKEventSheet) -> void:
 
 	# Process standalone conditions (run every frame)
 	for standalone_cond in sheet.standalone_conditions:
-		var cnode: Node = current_scene.get_node_or_null(standalone_cond.target_node)
-		if not cnode:
-			continue
+		var cnode: Node = null
+		if str(standalone_cond.target_node) == "System":
+			cnode = get_node("/root/FlowKitSystem")
+		else:
+			cnode = current_scene.get_node_or_null(standalone_cond.target_node)
+			if not cnode:
+				continue
 
 		var cond_result: bool = registry.check_condition(standalone_cond.condition_id, cnode, standalone_cond.inputs, standalone_cond.negated)
 		if cond_result:
 			# Execute actions associated with this standalone condition
 			for act in standalone_cond.actions:
-				var anode: Node = current_scene.get_node_or_null(act.target_node)
-				if anode:
-					registry.execute_action(act.action_id, anode, act.inputs)
+				var anode: Node = null
+				if str(act.target_node) == "System":
+					anode = get_node("/root/FlowKitSystem")
 				else:
-					print("[FlowKit] Standalone condition action target node not found: ", act.target_node)
+					anode = current_scene.get_node_or_null(act.target_node)
+					if not anode:
+						print("[FlowKit] Standalone condition action target node not found: ", act.target_node)
+						continue
+				
+				registry.execute_action(act.action_id, anode, act.inputs)
 
 	for block in sheet.events:
 		# Resolve target node (relative to the current scene)
-		var node: Node = current_scene.get_node_or_null(block.target_node)
-		if not node:
-			# Optionally debug: print missing node paths if you want
-			# print("[FlowKit] Missing target node for block:", block.target_node)
-			continue
+		# Handle "System" as the FlowKitSystem singleton
+		var node: Node = null
+		if str(block.target_node) == "System":
+			node = get_node("/root/FlowKitSystem")
+		else:
+			node = current_scene.get_node_or_null(block.target_node)
+			if not node:
+				# Optionally debug: print missing node paths if you want
+				# print("[FlowKit] Missing target node for block:", block.target_node)
+				continue
 
 		# Event trigger
 		var event_triggered: bool = registry.poll_event(block.event_id, node, block.inputs)
@@ -106,10 +120,14 @@ func _run_sheet(sheet: FKEventSheet) -> void:
 		# Conditions
 		var passed: bool = true
 		for cond in block.conditions:
-			var cnode: Node = current_scene.get_node_or_null(cond.target_node)
-			if not cnode:
-				passed = false
-				break
+			var cnode: Node = null
+			if str(cond.target_node) == "System":
+				cnode = get_node("/root/FlowKitSystem")
+			else:
+				cnode = current_scene.get_node_or_null(cond.target_node)
+				if not cnode:
+					passed = false
+					break
 
 			var cond_result: bool = registry.check_condition(cond.condition_id, cnode, cond.inputs, cond.negated)
 			if not cond_result:
@@ -121,8 +139,13 @@ func _run_sheet(sheet: FKEventSheet) -> void:
 
 		# Actions
 		for act in block.actions:
-			var anode: Node = current_scene.get_node_or_null(act.target_node)
-			if anode:
-				registry.execute_action(act.action_id, anode, act.inputs)
+			var anode: Node = null
+			if str(act.target_node) == "System":
+				anode = get_node("/root/FlowKitSystem")
 			else:
-				print("[FlowKit] Action target node not found: ", act.target_node)
+				anode = current_scene.get_node_or_null(act.target_node)
+				if not anode:
+					print("[FlowKit] Action target node not found: ", act.target_node)
+					continue
+			
+			registry.execute_action(act.action_id, anode, act.inputs)

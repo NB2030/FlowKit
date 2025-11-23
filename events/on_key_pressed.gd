@@ -7,7 +7,7 @@ func get_name() -> String:
 	return "On Key Pressed"
 
 func get_supported_types() -> Array[String]:
-	return ["Node"]
+	return ["Node", "System"]
 
 func get_inputs() -> Array:
 	return [
@@ -15,10 +15,7 @@ func get_inputs() -> Array:
 	]
 
 func poll(node: Node, inputs: Dictionary = {}) -> bool:
-	if node == null:
-		return false
-
-	if not node.is_inside_tree():
+	if not node or not node.is_inside_tree():
 		return false
 	
 	# If a specific key/action is provided, check only that

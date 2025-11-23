@@ -7,7 +7,7 @@ func get_name() -> String:
 	return "On Never"
 
 func get_supported_types() -> Array[String]:
-	return ["Node"]
+	return ["Node", "System"]
 
 func get_inputs() -> Array:
 	return []

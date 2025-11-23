@@ -7,16 +7,13 @@ func get_name() -> String:
 	return "On Process"
 
 func get_supported_types() -> Array[String]:
-	return ["Node"]
+	return ["Node", "System"]
 
 func get_inputs() -> Array:
 	return []
 
 func poll(node: Node, inputs: Dictionary = {}) -> bool:
-	if node == null:
-		return false
-
-	if node.is_inside_tree():
+	if node and node.is_inside_tree():
 		return true
 
 	return false

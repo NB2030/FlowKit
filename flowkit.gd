@@ -24,7 +24,12 @@ func _enter_tree() -> void:
 	editor.set_editor_interface(get_editor_interface())
 	editor.set_registry(action_registry)
 
-	# Add runtime autoload
+	# Add runtime autoloads
+	add_autoload_singleton(
+		"FlowKitSystem",
+		"res://addons/flowkit/runtime/flowkit_system.gd"
+	)
+	
 	add_autoload_singleton(
 		"FlowKit",
 		"res://addons/flowkit/runtime/flowkit_engine.gd"
@@ -36,6 +41,7 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
 	action_registry.free()
 
+	remove_autoload_singleton("FlowKitSystem")
 	remove_autoload_singleton("FlowKit")
 	remove_control_from_bottom_panel(editor)
 	editor.free()
