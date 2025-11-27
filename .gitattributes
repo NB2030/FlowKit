@@ -1,8 +1,7 @@
-# Export only the addons/flowkit directory
-# This ensures that when cloning as a submodule or using git archive,
-# only the plugin files are included
+# Normalize line endings for all files that Git considers text files.
+* text=auto eol=lf
 
-/* export-ignore
-!/addons/ export-ignore
-/addons/* export-ignore
-!/addons/flowkit/
+# Only include the addons folder when downloading from the Asset Library.
+/**        export-ignore
+/addons    !export-ignore
+/addons/** !export-ignore
