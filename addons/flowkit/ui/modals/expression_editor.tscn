@@ -3,10 +3,9 @@
 [ext_resource type="Script" path="res://addons/flowkit/ui/modals/expression_editor.gd" id="1_expr"]
 
 [node name="ExpressionEditor" type="PopupPanel"]
-oversampling_override = 1.0
 title = "Expression Editor"
 initial_position = 1
-size = Vector2i(500, 400)
+size = Vector2i(800, 600)
 borderless = false
 keep_title_visible = true
 script = ExtResource("1_expr")
@@ -21,10 +20,10 @@ offset_right = -4.0
 offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
@@ -33,17 +32,60 @@ theme_override_constants/separation = 12
 [node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Enter Action Parameters"
+text = "Expression Editor"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+[node name="TopContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ParamLabel" type="Label" parent="MarginContainer/VBoxContainer/TopContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Parameter (type)"
+
+[node name="ExpressionInput" type="LineEdit" parent="MarginContainer/VBoxContainer/TopContainer"]
+layout_mode = 2
+placeholder_text = "Click items below to build your expression..."
+
+[node name="HelpLabel" type="Label" parent="MarginContainer/VBoxContainer/TopContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "💡 Click items to insert them at cursor position. Use categories to browse available values."
+
+[node name="MainContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+split_offset = 200
 
-[node name="InputsContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+[node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 theme_override_constants/separation = 8
+
+[node name="NodeLabel" type="Label" parent="MarginContainer/VBoxContainer/MainContainer/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Scene Nodes"
+
+[node name="NodeTree" type="Tree" parent="MarginContainer/VBoxContainer/MainContainer/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+hide_root = false
+
+[node name="RightPanel" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+theme_override_constants/separation = 8
+
+[node name="ItemLabel" type="Label" parent="MarginContainer/VBoxContainer/MainContainer/RightPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Values"
+
+[node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/MainContainer/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="ButtonContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -54,9 +96,19 @@ alignment = 2
 layout_mode = 2
 text = "Cancel"
 
+[node name="PrevButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "← Previous"
+
+[node name="NextButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Next →"
+
 [node name="ConfirmButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
 layout_mode = 2
 text = "Confirm"
 
 [connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/CancelButton" to="." method="_on_cancel_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/PrevButton" to="." method="_on_prev_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/NextButton" to="." method="_on_next_button_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/ConfirmButton" to="." method="_on_confirm_button_pressed"]

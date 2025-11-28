@@ -47,6 +47,7 @@ func _enter_tree() -> void:
 	# Create and add custom inspector
 	inspector_plugin = preload("res://addons/flowkit/ui/inspector/flowkit_inspector_plugin.gd").new()
 	inspector_plugin.set_registry(action_registry)
+	inspector_plugin.set_editor_interface(get_editor_interface())
 	add_inspector_plugin(inspector_plugin)
 	
 	print("[FlowKit] Plugin loaded")

@@ -51,6 +51,12 @@ func _on_scene_changed(scene_root: Node) -> void:
 	var scene_path: String = scene_root.scene_file_path
 	var scene_name: String = scene_path.get_file().get_basename()
 	print("[FlowKit] Scene detected:", scene_name, " (", scene_root.name, ")")
+	
+	# Sync node variables from metadata to FlowKitSystem
+	var system: Node = get_tree().root.get_node_or_null("/root/FlowKitSystem")
+	if system and system.has_method("sync_scene_node_variables"):
+		system.sync_scene_node_variables(scene_root)
+	
 	_load_sheet_for_scene(scene_name)
 
 

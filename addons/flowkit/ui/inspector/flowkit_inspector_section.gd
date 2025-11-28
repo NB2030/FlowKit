@@ -2,28 +2,19 @@
 extends VBoxContainer
 
 ## FlowKit Inspector Section
-## Displays node variables and behavior options in the inspector
+## Displays node variables in the inspector with Godot-style UI
 
 var node: Node = null
 var registry: FKRegistry = null
 var editor_interface: EditorInterface = null
 
 # UI Components
-var category_button: Button = null
+var header_container: HBoxContainer = null
+var icon: TextureRect = null
+var title_label: Label = null
 var content_container: VBoxContainer = null
-var variables_container: VBoxContainer = null
-var behavior_container: VBoxContainer = null
-
-# Variable editing
-var add_variable_button: Button = null
 var variable_list: VBoxContainer = null
-
-# Behavior selection
-var behavior_label: Label = null
-var behavior_dropdown: OptionButton = null
-
-# Collapsed state
-var is_collapsed: bool = true
+var add_variable_button: Button = null
 
 func _ready() -> void:
 	_build_ui()
@@ -35,74 +26,81 @@ func set_node(p_node: Node) -> void:
 func set_registry(p_registry: FKRegistry) -> void:
 	registry = p_registry
 
+func set_editor_interface(p_editor_interface: EditorInterface) -> void:
+	editor_interface = p_editor_interface
+
 func _build_ui() -> void:
-	# Category header button
-	category_button = Button.new()
-	category_button.text = "▶ FlowKit"
-	category_button.flat = true
-	category_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	category_button.pressed.connect(_on_category_toggled)
-	add_child(category_button)
+	# Main container styling
+	add_theme_constant_override("separation", 0)
 	
-	# Content container (collapsible)
+	# Header section (Godot-style category header)
+	header_container = HBoxContainer.new()
+	header_container.add_theme_constant_override("separation", 4)
+	add_child(header_container)
+	
+	# Add top margin/separator
+	var top_separator: Control = Control.new()
+	top_separator.custom_minimum_size = Vector2(0, 8)
+	header_container.add_sibling(top_separator)
+	header_container.move_to_front()
+	
+	# Icon (using built-in Godot icon)
+	icon = TextureRect.new()
+	icon.custom_minimum_size = Vector2(16, 16)
+	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# Icon will be set in _ready after theme is available
+	header_container.add_child(icon)
+	
+	# Title label
+	title_label = Label.new()
+	title_label.text = "FlowKit"
+	title_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	header_container.add_child(title_label)
+	
+	# Content container
 	content_container = VBoxContainer.new()
-	content_container.visible = false
+	content_container.add_theme_constant_override("separation", 4)
 	add_child(content_container)
 	
-	# Add margin
+	# Add margin to content
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_left", 4)
+	margin.add_theme_constant_override("margin_right", 4)
+	margin.add_theme_constant_override("margin_top", 4)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	content_container.add_child(margin)
 	
 	var inner_vbox: VBoxContainer = VBoxContainer.new()
-	inner_vbox.add_theme_constant_override("separation", 12)
+	inner_vbox.add_theme_constant_override("separation", 2)
 	margin.add_child(inner_vbox)
 	
-	# Variables section
-	_build_variables_section(inner_vbox)
-	
-	# Separator
-	var separator: HSeparator = HSeparator.new()
-	inner_vbox.add_child(separator)
-	
-	# Behavior section
-	_build_behavior_section(inner_vbox)
-
-func _build_variables_section(parent: Control) -> void:
-	var label: Label = Label.new()
-	label.text = "Node Variables"
-	label.add_theme_font_size_override("font_size", 12)
-	parent.add_child(label)
-	
+	# Variable list
 	variable_list = VBoxContainer.new()
-	variable_list.add_theme_constant_override("separation", 4)
-	parent.add_child(variable_list)
+	variable_list.add_theme_constant_override("separation", 2)
+	inner_vbox.add_child(variable_list)
 	
+	# Add Variable button
 	add_variable_button = Button.new()
-	add_variable_button.text = "+ Add Variable"
+	add_variable_button.text = "Add Variable"
 	add_variable_button.pressed.connect(_on_add_variable)
-	parent.add_child(add_variable_button)
-
-func _build_behavior_section(parent: Control) -> void:
-	behavior_label = Label.new()
-	behavior_label.text = "Default Behavior"
-	behavior_label.add_theme_font_size_override("font_size", 12)
-	parent.add_child(behavior_label)
+	inner_vbox.add_child(add_variable_button)
 	
-	behavior_dropdown = OptionButton.new()
-	behavior_dropdown.add_item("None", 0)
-	behavior_dropdown.item_selected.connect(_on_behavior_selected)
-	parent.add_child(behavior_dropdown)
+	# Set icon after adding to tree (when theme is available)
+	call_deferred("_set_header_icon")
+
+func _set_header_icon() -> void:
+	if icon and is_inside_tree():
+		# Try to get the FlowKit icon or use a generic one
+		var theme_icon: Texture2D = get_theme_icon("Script", "EditorIcons")
+		if theme_icon:
+			icon.texture = theme_icon
 
 func _load_node_data() -> void:
 	if not node:
 		return
 	
 	_refresh_variables()
-	_refresh_behaviors()
 
 func _refresh_variables() -> void:
 	if not node or not variable_list:
@@ -112,104 +110,52 @@ func _refresh_variables() -> void:
 	for child in variable_list.get_children():
 		child.queue_free()
 	
-	# Get node variables from FlowKitSystem
-	if not Engine.is_editor_hint():
-		return
-	
-	# In editor, we need to store variables in node metadata
+	# Get node variables from metadata
 	var vars: Dictionary = {}
 	if node.has_meta("flowkit_variables"):
 		vars = node.get_meta("flowkit_variables", {})
 	
 	# Display existing variables
 	for var_name in vars.keys():
-		_add_variable_widget(var_name, vars[var_name])
+		_add_variable_row(var_name, vars[var_name])
 
-func _add_variable_widget(var_name: String, value: Variant) -> void:
+func _add_variable_row(var_name: String, value: Variant) -> void:
 	var hbox: HBoxContainer = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 8)
+	hbox.add_theme_constant_override("separation", 4)
 	variable_list.add_child(hbox)
+	
+	# Store the current var_name as metadata on the hbox for reference
+	hbox.set_meta("var_name", var_name)
 	
 	# Name field
 	var name_edit: LineEdit = LineEdit.new()
 	name_edit.text = var_name
-	name_edit.custom_minimum_size = Vector2(120, 0)
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_edit.placeholder_text = "Variable Name"
-	name_edit.text_changed.connect(func(new_name: String): _on_variable_name_changed(var_name, new_name))
+	name_edit.placeholder_text = "name"
+	name_edit.text_changed.connect(func(new_text: String): _on_variable_name_changed(hbox, new_text))
 	hbox.add_child(name_edit)
 	
 	# Value field
 	var value_edit: LineEdit = LineEdit.new()
 	value_edit.text = str(value)
-	value_edit.custom_minimum_size = Vector2(120, 0)
 	value_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	value_edit.placeholder_text = "Value"
-	value_edit.text_changed.connect(func(new_value: String): _on_variable_value_changed(var_name, new_value))
+	value_edit.placeholder_text = "value"
+	value_edit.text_changed.connect(func(new_text: String): _on_variable_value_changed(hbox, new_text))
 	hbox.add_child(value_edit)
 	
 	# Delete button
 	var delete_btn: Button = Button.new()
-	delete_btn.text = "✕"
-	delete_btn.custom_minimum_size = Vector2(32, 0)
-	delete_btn.pressed.connect(func(): _on_delete_variable(var_name))
+	delete_btn.text = "×"
+	delete_btn.custom_minimum_size = Vector2(24, 0)
+	delete_btn.tooltip_text = "Remove variable"
+	delete_btn.pressed.connect(func(): _on_delete_variable(hbox))
 	hbox.add_child(delete_btn)
-
-func _refresh_behaviors() -> void:
-	if not node or not registry or not behavior_dropdown:
-		return
-	
-	# Clear existing items (keep "None")
-	while behavior_dropdown.item_count > 1:
-		behavior_dropdown.remove_item(1)
-	
-	# Get behaviors compatible with this node type
-	var node_type: String = node.get_class()
-	var compatible_behaviors: Array = []
-	
-	if registry.behavior_providers:
-		for behavior in registry.behavior_providers:
-			if behavior.has_method("get_supported_types"):
-				var supported_types: Array = behavior.get_supported_types()
-				if _is_compatible_type(node_type, supported_types):
-					compatible_behaviors.append(behavior)
-	
-	# Add compatible behaviors to dropdown
-	var index: int = 1
-	for behavior in compatible_behaviors:
-		var behavior_name: String = behavior.get_name() if behavior.has_method("get_name") else "Unknown"
-		behavior_dropdown.add_item(behavior_name, index)
-		behavior_dropdown.set_item_metadata(index, behavior.get_id())
-		index += 1
-	
-	# Select current behavior
-	if node.has_meta("flowkit_behavior"):
-		var current_behavior_id: String = node.get_meta("flowkit_behavior", "")
-		for i in range(behavior_dropdown.item_count):
-			if behavior_dropdown.get_item_metadata(i) == current_behavior_id:
-				behavior_dropdown.select(i)
-				break
-
-func _is_compatible_type(node_type: String, supported_types: Array) -> bool:
-	if supported_types.is_empty():
-		return true
-	
-	for type in supported_types:
-		if node_type == type or ClassDB.is_parent_class(node_type, type):
-			return true
-	
-	return false
-
-func _on_category_toggled() -> void:
-	is_collapsed = not is_collapsed
-	content_container.visible = not is_collapsed
-	category_button.text = "▼ FlowKit" if not is_collapsed else "▶ FlowKit"
 
 func _on_add_variable() -> void:
 	if not node:
 		return
 	
-	# Create new variable with default name
+	# Get existing variables
 	var vars: Dictionary = {}
 	if node.has_meta("flowkit_variables"):
 		vars = node.get_meta("flowkit_variables", {})
@@ -221,67 +167,82 @@ func _on_add_variable() -> void:
 		var_name = "variable" + str(counter)
 		counter += 1
 	
+	# Add new variable
 	vars[var_name] = ""
 	node.set_meta("flowkit_variables", vars)
 	
-	_refresh_variables()
+	# Add the row at the bottom
+	_add_variable_row(var_name, "")
 
-func _on_variable_name_changed(old_name: String, new_name: String) -> void:
-	if not node or old_name == new_name:
+func _on_variable_name_changed(hbox: HBoxContainer, new_name: String) -> void:
+	if not node or not hbox:
 		return
 	
+	var old_name: String = hbox.get_meta("var_name", "")
+	
 	new_name = new_name.strip_edges()
+	
+	# If empty, just return - don't refresh yet
 	if new_name.is_empty():
 		return
 	
-	var vars: Dictionary = {}
-	if node.has_meta("flowkit_variables"):
-		vars = node.get_meta("flowkit_variables", {})
-	
-	# Check if new name already exists
-	if vars.has(new_name) and new_name != old_name:
-		_refresh_variables()  # Revert to old name
+	if old_name == new_name:
 		return
 	
-	# Rename variable
+	var vars: Dictionary = {}
+	if node.has_meta("flowkit_variables"):
+		vars = node.get_meta("flowkit_variables", {}).duplicate()
+	
+	# Check if new name already exists - if so, just return without refreshing
+	if vars.has(new_name):
+		return
+	
+	# Rename variable - preserve the value
+	var value: Variant = ""
 	if vars.has(old_name):
-		var value: Variant = vars[old_name]
+		value = vars[old_name]
 		vars.erase(old_name)
-		vars[new_name] = value
-		node.set_meta("flowkit_variables", vars)
+	
+	vars[new_name] = value
+	node.set_meta("flowkit_variables", vars)
+	hbox.set_meta("var_name", new_name)
+	_notify_property_changed()
 
-func _on_variable_value_changed(var_name: String, new_value: String) -> void:
-	if not node:
+func _on_variable_value_changed(hbox: HBoxContainer, new_value: String) -> void:
+	if not node or not hbox:
+		return
+	
+	var var_name: String = hbox.get_meta("var_name", "")
+	if var_name.is_empty():
 		return
 	
 	var vars: Dictionary = {}
 	if node.has_meta("flowkit_variables"):
-		vars = node.get_meta("flowkit_variables", {})
+		vars = node.get_meta("flowkit_variables", {}).duplicate()
 	
 	vars[var_name] = new_value
 	node.set_meta("flowkit_variables", vars)
+	_notify_property_changed()
 
-func _on_delete_variable(var_name: String) -> void:
-	if not node:
+func _on_delete_variable(hbox: HBoxContainer) -> void:
+	if not node or not hbox:
+		return
+	
+	var var_name: String = hbox.get_meta("var_name", "")
+	if var_name.is_empty():
 		return
 	
 	var vars: Dictionary = {}
 	if node.has_meta("flowkit_variables"):
-		vars = node.get_meta("flowkit_variables", {})
+		vars = node.get_meta("flowkit_variables", {}).duplicate()
 	
 	vars.erase(var_name)
 	node.set_meta("flowkit_variables", vars)
+	_notify_property_changed()
 	
 	_refresh_variables()
 
-func _on_behavior_selected(index: int) -> void:
-	if not node:
-		return
-	
-	if index == 0:
-		# None selected
-		node.remove_meta("flowkit_behavior")
-	else:
-		var behavior_id: Variant = behavior_dropdown.get_item_metadata(index)
-		if behavior_id:
-			node.set_meta("flowkit_behavior", behavior_id)
+func _notify_property_changed() -> void:
+	# Mark the scene as modified in the editor
+	if editor_interface:
+		editor_interface.mark_scene_as_unsaved()

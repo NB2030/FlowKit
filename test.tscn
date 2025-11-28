@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://xclo6g0rtoo5"]
+
+[node name="Node2D" type="Node2D"]
+metadata/flowkit_variables = {
+"test_variable2": "This is a test variable2"
+}
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
