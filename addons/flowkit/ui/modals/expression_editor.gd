@@ -132,9 +132,7 @@ func _populate_node_values() -> void:
 	# Special handling for System node (null metadata)
 	if selected_tree_node == null:
 		# System node - show scene variables
-		item_list.add_item("(Scene variables - set at runtime)")
 		item_list.add_item("system.get_var(\"variable_name\")")
-		item_list.add_item("system.set_var(\"variable_name\", value)")
 		return
 	
 	# Get scene root and target node
