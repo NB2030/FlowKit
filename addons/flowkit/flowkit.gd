@@ -5,6 +5,7 @@ var action_registry
 var editor
 var generator
 var inspector_plugin
+var editor_main_screen
 
 func _enable_plugin() -> void:
 	# Add autoloads here if needed later.
@@ -41,8 +42,11 @@ func _enter_tree() -> void:
 		"res://addons/flowkit/runtime/flowkit_engine.gd"
 	)
 
-	# Add editor panel
-	add_control_to_bottom_panel(editor, "FlowKit")
+	# Add editor as main screen plugin
+	editor_main_screen = get_editor_interface().get_editor_main_screen()
+	editor_main_screen.add_child(editor)
+	# Hide by default until user clicks the FlowKit button
+	_make_visible(false)
 	
 	# Create and add custom inspector
 	inspector_plugin = preload("res://addons/flowkit/ui/inspector/flowkit_inspector_plugin.gd").new()
@@ -57,10 +61,24 @@ func _exit_tree() -> void:
 
 	remove_autoload_singleton("FlowKitSystem")
 	remove_autoload_singleton("FlowKit")
-	remove_control_from_bottom_panel(editor)
-	editor.free()
+	
+	if editor:
+		editor.queue_free()
 	
 	# Remove inspector plugin
 	if inspector_plugin:
 		remove_inspector_plugin(inspector_plugin)
 		inspector_plugin = null
+
+func _has_main_screen() -> bool:
+	return true
+
+func _make_visible(visible: bool) -> void:
+	if editor:
+		editor.visible = visible
+
+func _get_plugin_name() -> String:
+	return "FlowKit"
+
+func _get_plugin_icon() -> Texture2D:
+	return get_editor_interface().get_editor_theme().get_icon("Node", "EditorIcons")
