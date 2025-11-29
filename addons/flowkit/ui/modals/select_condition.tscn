@@ -6,7 +6,7 @@
 oversampling_override = 1.0
 title = "Select a Condition"
 initial_position = 1
-size = Vector2i(400, 320)
+size = Vector2i(900, 600)
 borderless = false
 keep_title_visible = true
 unresizable = false
@@ -27,16 +27,65 @@ grow_vertical = 2
 layout_mode = 2
 placeholder_text = "Search..."
 
-[node name="ItemList" type="ItemList" parent="VBoxContainer"]
+[node name="HSplitContainer" type="HSplitContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 450
+
+[node name="RecentPanel" type="Panel" parent="VBoxContainer/HSplitContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 0)
+
+[node name="RecentVBox" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/RecentPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RecentLabel" type="Label" parent="VBoxContainer/HSplitContainer/RecentPanel/RecentVBox"]
+layout_mode = 2
+text = "Recent"
+theme_type_variations = ["header_small"]
+
+[node name="RecentItemList" type="ItemList" parent="VBoxContainer/HSplitContainer/RecentPanel/RecentVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DescriptionPanel" type="Panel" parent="VBoxContainer"]
+[node name="MainPanel" type="Panel" parent="VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MainVBox" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/MainPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AllLabel" type="Label" parent="VBoxContainer/HSplitContainer/MainPanel/MainVBox"]
+layout_mode = 2
+text = "All Conditions"
+theme_type_variations = ["header_small"]
+
+[node name="ItemList" type="ItemList" parent="VBoxContainer/HSplitContainer/MainPanel/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DescriptionPanel" type="Panel" parent="VBoxContainer/HSplitContainer/MainPanel/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 0
 custom_minimum_size = Vector2(0, 60)
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/DescriptionPanel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/HSplitContainer/MainPanel/MainVBox/DescriptionPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -48,7 +97,7 @@ offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DescriptionLabel" type="Label" parent="VBoxContainer/DescriptionPanel/ScrollContainer"]
+[node name="DescriptionLabel" type="Label" parent="VBoxContainer/HSplitContainer/MainPanel/MainVBox/DescriptionPanel/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3

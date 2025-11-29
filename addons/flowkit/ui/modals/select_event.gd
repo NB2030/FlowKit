@@ -8,10 +8,12 @@ var selected_node_class: String = ""
 var available_events: Array = []
 
 @onready var search_box := $VBoxContainer/SearchBox
-@onready var item_list := $VBoxContainer/ItemList
-@onready var description_label := $VBoxContainer/DescriptionPanel/ScrollContainer/DescriptionLabel
+@onready var item_list := $VBoxContainer/HSplitContainer/MainPanel/MainVBox/ItemList
+@onready var description_label := $VBoxContainer/HSplitContainer/MainPanel/MainVBox/DescriptionPanel/ScrollContainer/DescriptionLabel
+@onready var recent_item_list := $VBoxContainer/HSplitContainer/RecentPanel/RecentVBox/RecentItemList
 
 var _all_items_cache: Array = []
+var _recent_items_manager: Variant = null
 
 func _ready() -> void:
 	if search_box:
@@ -21,11 +23,17 @@ func _ready() -> void:
 		item_list.item_activated.connect(_on_item_activated)
 		item_list.item_selected.connect(_on_item_selected)
 	
+	if recent_item_list:
+		recent_item_list.item_activated.connect(_on_recent_item_activated)
+	
 	# Set description panel style
-	var panel = $VBoxContainer/DescriptionPanel
+	var panel = $VBoxContainer/HSplitContainer/MainPanel/MainVBox/DescriptionPanel
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.2, 0.2, 0.2, 0.8)
 	panel.add_theme_stylebox_override("panel", style)
+	
+	# Load recent items manager
+	_recent_items_manager = load("res://addons/flowkit/ui/modals/recent_items_manager.gd").new()
 	
 	# Load all available events
 	_load_available_events()
@@ -99,6 +107,7 @@ func populate_events(node_path: String, node_class: String) -> void:
 					})
 	
 	_update_list()
+	_populate_recent_list()
 
 func _update_list(filter_text: String = "") -> void:
 	item_list.clear()
@@ -147,15 +156,19 @@ func _on_item_activated(index: int) -> void:
 	
 	var event_id = item_list.get_item_metadata(index)
 	
-	# Find the event provider to get its inputs
+	# Find the event provider to get its inputs and name
 	var event_inputs: Array = []
+	var event_name = ""
 	for event in available_events:
 		if event.has_method("get_id") and event.get_id() == event_id:
 			if event.has_method("get_inputs"):
 				event_inputs = event.get_inputs()
+			if event.has_method("get_name"):
+				event_name = event.get_name()
 			break
 	
 	print("Event selected: ", event_id, " for node: ", selected_node_path, " with inputs: ", event_inputs)
+	_recent_items_manager.add_recent_event(event_id, event_name, selected_node_class)
 	event_selected.emit(selected_node_path, event_id, event_inputs)
 	hide()
 
@@ -176,4 +189,47 @@ func _on_item_selected(index: int) -> void:
 func _on_popup_hide() -> void:
 	if search_box:
 		search_box.clear()
+
+func _populate_recent_list() -> void:
+	"""Populate the recent events list."""
+	if not recent_item_list or not _recent_items_manager:
+		return
+	
+	recent_item_list.clear()
+	
+	# Filter recent events for current node type
+	var recent_for_type = []
+	for recent_event in _recent_items_manager.recent_events:
+		if recent_event["node_class"] == selected_node_class:
+			recent_for_type.append(recent_event)
+	
+	if recent_for_type.is_empty():
+		recent_item_list.add_item("(No recent items)")
+		recent_item_list.set_item_disabled(0, true)
+		return
+	
+	for recent_event in recent_for_type:
+		recent_item_list.add_item(recent_event["name"])
+		var index = recent_item_list.item_count - 1
+		recent_item_list.set_item_metadata(index, recent_event)
+
+func _on_recent_item_activated(index: int) -> void:
+	"""Handle selection from recent items."""
+	if recent_item_list.is_item_disabled(index):
+		return
+	
+	var recent_event = recent_item_list.get_item_metadata(index)
+	var event_id = recent_event["id"]
+	
+	# Find the event to get its inputs
+	var event_inputs: Array = []
+	for event in available_events:
+		if event.has_method("get_id") and event.get_id() == event_id:
+			if event.has_method("get_inputs"):
+				event_inputs = event.get_inputs()
+			break
+	
+	print("Recent event selected: ", event_id, " for node: ", selected_node_path)
+	event_selected.emit(selected_node_path, event_id, event_inputs)
+	hide()
 

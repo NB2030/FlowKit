@@ -7,9 +7,11 @@ var editor_interface: EditorInterface
 var available_events: Array = []
 
 @onready var search_box := $VBoxContainer/SearchBox
-@onready var item_list := $VBoxContainer/ItemList
+@onready var item_list := $VBoxContainer/HSplitContainer/MainPanel/MainVBox/ItemList
+@onready var recent_item_list := $VBoxContainer/HSplitContainer/RecentPanel/RecentVBox/RecentItemList
 
 var _all_items_cache: Array = []
+var _recent_items_manager: Variant = null
 
 func _ready() -> void:
 	if search_box:
@@ -19,8 +21,15 @@ func _ready() -> void:
 		item_list.item_activated.connect(_on_item_activated)
 		item_list.item_selected.connect(_on_item_selected)
 	
+	if recent_item_list:
+		recent_item_list.item_activated.connect(_on_recent_item_activated)
+	
+	# Load recent items manager
+	_recent_items_manager = load("res://addons/flowkit/ui/modals/recent_items_manager.gd").new()
+	
 	# Load all available events to check compatibility
 	_load_available_events()
+	_populate_recent_list()
 
 func _load_available_events() -> void:
 	"""Load all event scripts from the events folder."""
@@ -80,6 +89,7 @@ func populate_from_scene(scene_root: Node) -> void:
 		_add_node_recursive(scene_root, scene_root, 0)
 		
 	_update_list()
+	_populate_recent_list()
 
 func _add_node_recursive(node: Node, scene_root: Node, depth: int) -> void:
 	var node_name = node.name
@@ -179,6 +189,7 @@ func _on_item_activated(index: int) -> void:
 	# Handle System node
 	if node_path_str == "System":
 		print("Node selected: System (System)")
+		_recent_items_manager.add_recent_node("System", "System")
 		node_selected.emit("System", "System")
 		hide()
 		return
@@ -187,6 +198,7 @@ func _on_item_activated(index: int) -> void:
 	if node:
 		var node_class = node.get_class()
 		print("Node selected: ", node_path_str, " (", node_class, ")")
+		_recent_items_manager.add_recent_node(node_path_str, node_class)
 		node_selected.emit(node_path_str, node_class)
 		hide()
 
@@ -211,4 +223,38 @@ func _on_item_selected(index: int) -> void:
 func _on_popup_hide() -> void:
 	if search_box:
 		search_box.clear()
+
+func _populate_recent_list() -> void:
+	"""Populate the recent items list."""
+	if not recent_item_list or not _recent_items_manager:
+		return
+	
+	recent_item_list.clear()
+	
+	if _recent_items_manager.recent_nodes.is_empty():
+		recent_item_list.add_item("(No recent items)")
+		recent_item_list.set_item_disabled(0, true)
+		return
+	
+	for recent_node in _recent_items_manager.recent_nodes:
+		var display_name = recent_node["path"]
+		if recent_node["path"] == "System":
+			display_name = "System"
+		
+		recent_item_list.add_item(display_name)
+		var index = recent_item_list.item_count - 1
+		recent_item_list.set_item_metadata(index, recent_node)
+
+func _on_recent_item_activated(index: int) -> void:
+	"""Handle selection from recent items."""
+	if recent_item_list.is_item_disabled(index):
+		return
+	
+	var recent_node = recent_item_list.get_item_metadata(index)
+	var node_path_str = recent_node["path"]
+	var node_class = recent_node["class"]
+	
+	print("Recent node selected: ", node_path_str, " (", node_class, ")")
+	node_selected.emit(node_path_str, node_class)
+	hide()
 

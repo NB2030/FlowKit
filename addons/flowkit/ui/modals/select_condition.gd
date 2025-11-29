@@ -8,10 +8,12 @@ var selected_node_class: String = ""
 var available_conditions: Array = []
 
 @onready var search_box := $VBoxContainer/SearchBox
-@onready var item_list := $VBoxContainer/ItemList
-@onready var description_label := $VBoxContainer/DescriptionPanel/ScrollContainer/DescriptionLabel
+@onready var item_list := $VBoxContainer/HSplitContainer/MainPanel/MainVBox/ItemList
+@onready var description_label := $VBoxContainer/HSplitContainer/MainPanel/MainVBox/DescriptionPanel/ScrollContainer/DescriptionLabel
+@onready var recent_item_list := $VBoxContainer/HSplitContainer/RecentPanel/RecentVBox/RecentItemList
 
 var _all_items_cache: Array = []
+var _recent_items_manager: Variant = null
 
 func _ready() -> void:
 	if search_box:
@@ -21,11 +23,17 @@ func _ready() -> void:
 		item_list.item_activated.connect(_on_item_activated)
 		item_list.item_selected.connect(_on_item_selected)
 	
+	if recent_item_list:
+		recent_item_list.item_activated.connect(_on_recent_item_activated)
+	
 	# Set description panel style
-	var panel = $VBoxContainer/DescriptionPanel
+	var panel = $VBoxContainer/HSplitContainer/MainPanel/MainVBox/DescriptionPanel
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.2, 0.2, 0.2, 0.8)
 	panel.add_theme_stylebox_override("panel", style)
+	
+	# Load recent items manager
+	_recent_items_manager = load("res://addons/flowkit/ui/modals/recent_items_manager.gd").new()
 	
 	# Load all available conditions
 	_load_available_conditions()
@@ -86,6 +94,7 @@ func populate_conditions(node_path: String, node_class: String) -> void:
 			})
 			
 	_update_list()
+	_populate_recent_list()
 
 func _update_list(filter_text: String = "") -> void:
 	item_list.clear()
@@ -136,7 +145,15 @@ func _on_item_activated(index: int) -> void:
 	var condition_id = metadata["id"]
 	var inputs = metadata["inputs"]
 	
+	# Find condition name for recent items
+	var condition_name = ""
+	for condition in available_conditions:
+		if condition.get_id() == condition_id:
+			condition_name = condition.get_name()
+			break
+	
 	print("Condition selected: ", condition_id, " for node: ", selected_node_path)
+	_recent_items_manager.add_recent_condition(condition_id, condition_name, selected_node_class)
 	condition_selected.emit(selected_node_path, condition_id, inputs)
 	hide()
 
@@ -158,4 +175,46 @@ func _on_item_selected(index: int) -> void:
 func _on_popup_hide() -> void:
 	if search_box:
 		search_box.clear()
+
+func _populate_recent_list() -> void:
+	"""Populate the recent conditions list."""
+	if not recent_item_list or not _recent_items_manager:
+		return
+	
+	recent_item_list.clear()
+	
+	# Filter recent conditions for current node type
+	var recent_for_type = []
+	for recent_condition in _recent_items_manager.recent_conditions:
+		if recent_condition["node_class"] == selected_node_class:
+			recent_for_type.append(recent_condition)
+	
+	if recent_for_type.is_empty():
+		recent_item_list.add_item("(No recent items)")
+		recent_item_list.set_item_disabled(0, true)
+		return
+	
+	for recent_condition in recent_for_type:
+		recent_item_list.add_item(recent_condition["name"])
+		var index = recent_item_list.item_count - 1
+		recent_item_list.set_item_metadata(index, recent_condition)
+
+func _on_recent_item_activated(index: int) -> void:
+	"""Handle selection from recent items."""
+	if recent_item_list.is_item_disabled(index):
+		return
+	
+	var recent_condition = recent_item_list.get_item_metadata(index)
+	var condition_id = recent_condition["id"]
+	
+	# Find the condition to get its inputs
+	var condition_inputs: Array = []
+	for condition in available_conditions:
+		if condition.get_id() == condition_id:
+			condition_inputs = condition.get_inputs()
+			break
+	
+	print("Recent condition selected: ", condition_id, " for node: ", selected_node_path)
+	condition_selected.emit(selected_node_path, condition_id, condition_inputs)
+	hide()
 
