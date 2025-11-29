@@ -1,5 +1,8 @@
 extends FKEvent
 
+func get_description() -> String:
+	return "This runs every time physics are calculated."
+
 func get_id() -> String:
 	return "on_process_physics"
 

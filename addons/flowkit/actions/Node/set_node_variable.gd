@@ -1,5 +1,8 @@
 extends FKAction
 
+func get_description() -> String:
+	return "Sets a node variable that can be retrieved via n_variable_name or system.get_node_var(node.get_tree().current_scene, \"variable_name\") in the expression editor."
+
 func get_id() -> String:
 	return "set_node_variable"
 

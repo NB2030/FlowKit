@@ -1,5 +1,8 @@
 extends FKAction
 
+func get_description() -> String:
+	return "Prints a message to the console."
+
 func get_id() -> String:
 	return "print"
 

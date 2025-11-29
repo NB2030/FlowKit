@@ -1,5 +1,8 @@
 extends FKEvent
 
+func get_description() -> String:
+	return "This event will run every frame."
+
 func get_id() -> String:
 	return "on_process"
 

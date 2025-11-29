@@ -1,5 +1,8 @@
 extends FKEvent
 
+func get_description() -> String:
+	return "This event will never be executed."
+
 func get_id() -> String:
 	return "on_never"
 
