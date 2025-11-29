@@ -5,7 +5,7 @@
 [node name="SelectAction" type="PopupPanel"]
 oversampling_override = 1.0
 title = "Select an Action"
-initial_position = 1
+initial_position = 0
 size = Vector2i(900, 600)
 borderless = false
 keep_title_visible = true

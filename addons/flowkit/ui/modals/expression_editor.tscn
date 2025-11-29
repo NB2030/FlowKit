@@ -4,7 +4,7 @@
 
 [node name="ExpressionEditor" type="PopupPanel"]
 title = "Expression Editor"
-initial_position = 1
+initial_position = 0
 size = Vector2i(800, 600)
 borderless = false
 keep_title_visible = true
