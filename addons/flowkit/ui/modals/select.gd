@@ -257,4 +257,3 @@ func _on_recent_item_activated(index: int) -> void:
 	print("Recent node selected: ", node_path_str, " (", node_class, ")")
 	node_selected.emit(node_path_str, node_class)
 	hide()
-
