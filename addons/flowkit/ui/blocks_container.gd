@@ -20,59 +20,24 @@ func _drop_data(at_position: Vector2, data) -> void:
 	if not is_instance_valid(node) or node.get_parent() != self:
 		return
 	
-	# Get block and its children (for group move)
-	var blocks_to_move = _get_block_with_children(node)
-	var first_idx = blocks_to_move[0].get_index()
-	var last_idx = first_idx + blocks_to_move.size() - 1
+	# In GDevelop-style, each event row is self-contained (no children to move with it)
+	var current_idx = node.get_index()
 	var target_idx = _calculate_drop_index(at_position)
 	
-	# If target is within our group (would split parent from children), no-op
-	if target_idx >= first_idx and target_idx <= last_idx + 1:
+	# No-op if target is the same position
+	if target_idx == current_idx or target_idx == current_idx + 1:
 		return
 	
-	# Adjust target if moving down (indices shift after removal)
-	if target_idx > last_idx:
-		target_idx -= blocks_to_move.size()
+	# Adjust target if moving down (index shifts after removal)
+	if target_idx > current_idx:
+		target_idx -= 1
 	
-	# Remove all blocks, then re-add at target position
-	for block in blocks_to_move:
-		remove_child(block)
-	
-	for i in range(blocks_to_move.size()):
-		add_child(blocks_to_move[i])
-		move_child(blocks_to_move[i], target_idx + i)
+	# Move the block
+	remove_child(node)
+	add_child(node)
+	move_child(node, target_idx)
 	
 	block_moved.emit()
-
-func _get_block_with_children(block) -> Array:
-	"""Get block and all its children in order."""
-	var result = [block]
-	var block_idx = block.get_index()
-	
-	# Events: collect everything until next event
-	if block.has_method("get_event_data"):
-		for i in range(block_idx + 1, get_child_count()):
-			var child = get_child(i)
-			if not child.visible or child.name == "EmptyLabel":
-				continue
-			if child.has_method("get_event_data"):
-				break
-			result.append(child)
-		return result
-	
-	# Conditions: collect actions until next condition/event
-	if block.has_method("get_condition_data"):
-		for i in range(block_idx + 1, get_child_count()):
-			var child = get_child(i)
-			if not child.visible or child.name == "EmptyLabel":
-				continue
-			if child.has_method("get_event_data") or child.has_method("get_condition_data"):
-				break
-			result.append(child)
-		return result
-	
-	# Actions have no children
-	return result
 
 func _calculate_drop_index(at_position: Vector2) -> int:
 	for i in range(get_child_count()):
