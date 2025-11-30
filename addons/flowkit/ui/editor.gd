@@ -40,12 +40,8 @@ const MAX_UNDO_STATES: int = 50  # Maximum number of undo states to keep
 func _ready() -> void:
 	_setup_ui()
 	# Connect block_moved signals for autosave and undo state on drag-and-drop reorder
-	if blocks_container.has_signal("before_block_moved"):
-		blocks_container.before_block_moved.connect(_push_undo_state)
-	if blocks_container.has_signal("block_moved"):
-		blocks_container.block_moved.connect(_save_sheet)
-	# Connect undo/redo signals from menu bar
-	call_deferred("_setup_undo_redo_menu")
+	blocks_container.before_block_moved.connect(_push_undo_state)
+	blocks_container.block_moved.connect(_save_sheet)
 
 func _setup_ui() -> void:
 	"""Initialize UI state."""
@@ -116,8 +112,9 @@ func _input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 	
-	# Handle Ctrl+Z (undo) and Ctrl+Shift+Z / Ctrl+Y (redo) globally for the FlowKit panel
-	if _is_mouse_in_editor_area():
+	# Handle Ctrl+Z (undo) and Ctrl+Shift+Z / Ctrl+Y (redo) when FlowKit panel is visible
+	# This allows undo/redo to work even when keyboard navigating or mouse is outside
+	if visible and (_is_mouse_in_editor_area() or _has_focus_in_subtree()):
 		if event.keycode == KEY_Z and event.ctrl_pressed:
 			if event.shift_pressed:
 				_redo()
@@ -156,12 +153,14 @@ func _is_mouse_in_editor_area() -> bool:
 	var mouse_pos = get_global_mouse_position()
 	return get_global_rect().has_point(mouse_pos)
 
-# === Undo/Redo System ===
+func _has_focus_in_subtree() -> bool:
+	"""Check if any child control has focus."""
+	var focused = get_viewport().gui_get_focus_owner()
+	if focused == null:
+		return false
+	return focused == self or is_ancestor_of(focused)
 
-func _setup_undo_redo_menu() -> void:
-	"""Connect undo/redo signals from menu bar if not already connected via scene."""
-	# Signal connections are now handled via the editor.tscn file
-	pass
+# === Undo/Redo System ===
 
 func _capture_sheet_state() -> Array:
 	"""Capture current sheet state as serialized data."""
@@ -220,7 +219,6 @@ func _clear_undo_history() -> void:
 func _undo() -> void:
 	"""Undo the last action."""
 	if undo_stack.is_empty():
-		print("[FlowKit] Nothing to undo")
 		return
 	
 	# Push current state to redo stack
@@ -238,7 +236,6 @@ func _undo() -> void:
 func _redo() -> void:
 	"""Redo the last undone action."""
 	if redo_stack.is_empty():
-		print("[FlowKit] Nothing to redo")
 		return
 	
 	# Push current state to undo stack
