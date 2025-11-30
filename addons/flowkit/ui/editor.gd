@@ -31,11 +31,22 @@ var selected_row = null  # Currently selected event row
 var selected_item = null  # Currently selected condition/action item
 var clipboard_events: Array = []  # Stores copied event data for paste
 
+# Undo/Redo state
+var undo_stack: Array = []  # Stack of previous states
+var redo_stack: Array = []  # Stack of undone states
+const MAX_UNDO_STATES: int = 50  # Maximum number of undo states to keep
+
 func _ready() -> void:
+	# Initialize undo/redo stacks
+	if undo_stack == null:
+		undo_stack = []
+	if redo_stack == null:
+		redo_stack = []
+	
 	_setup_ui()
-	# Connect block_moved signal for autosave on drag-and-drop reorder
-	if blocks_container.has_signal("block_moved"):
-		blocks_container.block_moved.connect(_save_sheet)
+	# Connect block_moved signals for autosave and undo state on drag-and-drop reorder
+	blocks_container.before_block_moved.connect(_push_undo_state)
+	blocks_container.block_moved.connect(_save_sheet)
 
 func _setup_ui() -> void:
 	"""Initialize UI state."""
