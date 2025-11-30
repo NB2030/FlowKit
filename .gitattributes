@@ -5,3 +5,9 @@
 /**        export-ignore
 /addons    !export-ignore
 /addons/** !export-ignore
+
+# Ignore demo files from addons/flowkit/demos
+/addons/flowkit/demos/** export-ignore
+
+# Ignore demo sheets from addons/flowkit/saved
+/addons/flowkit/saved/event_sheet/** export-ignore
