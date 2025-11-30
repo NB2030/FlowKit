@@ -75,7 +75,8 @@ func _load_from_manifest() -> bool:
 			if script:
 				behavior_providers.append(script.new())
 	
-	return action_providers.size() > 0 or condition_providers.size() > 0 or event_providers.size() > 0 or behavior_providers.size() > 0
+	var has_providers = action_providers.size() + condition_providers.size() + event_providers.size() + behavior_providers.size() > 0
+	return has_providers
 
 ## Directory scanning for editor/development use only.
 ## This will NOT work in exported builds.

@@ -5,6 +5,9 @@ class_name FKGenerator
 const ACTIONS_DIR = "res://addons/flowkit/actions/"
 const CONDITIONS_DIR = "res://addons/flowkit/conditions/"
 const EVENTS_DIR = "res://addons/flowkit/events/"
+const BEHAVIORS_DIR = "res://addons/flowkit/behaviors/"
+const MANIFEST_PATH = "res://addons/flowkit/saved/provider_manifest.tres"
+const PROVIDER_MANIFEST_SCRIPT = "res://addons/flowkit/resources/provider_manifest.gd"
 
 var editor_interface: EditorInterface
 
@@ -493,9 +496,6 @@ func _write_file(path: String, content: String) -> void:
 # MANIFEST GENERATION
 # ============================================================================
 
-const MANIFEST_PATH = "res://addons/flowkit/saved/provider_manifest.tres"
-const BEHAVIORS_DIR = "res://addons/flowkit/behaviors/"
-
 ## Generates the provider manifest resource for exported builds.
 ## This scans all provider directories and creates a manifest with
 ## preloaded script references that can be used at runtime.
@@ -512,7 +512,7 @@ func generate_manifest() -> Dictionary:
 	_ensure_directory_exists("res://addons/flowkit/saved")
 	
 	# Create manifest resource
-	var manifest: Resource = load("res://addons/flowkit/resources/provider_manifest.gd").new()
+	var manifest: Resource = load(PROVIDER_MANIFEST_SCRIPT).new()
 	
 	# Scan and collect all provider scripts
 	var action_scripts: Array[GDScript] = []
