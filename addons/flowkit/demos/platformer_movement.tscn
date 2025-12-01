@@ -159,7 +159,6 @@ animations = [{
 size = Vector2(12.000002, 19.000004)
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
-scale = Vector2(5, 5)
 metadata/flowkit_behavior = {
 "id": "platformer_movement",
 "inputs": {

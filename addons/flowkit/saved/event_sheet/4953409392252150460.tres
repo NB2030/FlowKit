@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="FKEventSheet" load_steps=11 format=3 uid="uid://b83l5jwe7e8b7"]
+[gd_resource type="Resource" script_class="FKEventSheet" load_steps=9 format=3 uid="uid://b83l5jwe7e8b7"]
 
 [ext_resource type="Script" uid="uid://bxdhylwvr4osy" path="res://addons/flowkit/resources/event_block.gd" id="1_iqjwq"]
 [ext_resource type="Script" uid="uid://bwbi0utcwmxwf" path="res://addons/flowkit/resources/event_action.gd" id="2_e5301"]
@@ -14,23 +14,15 @@ inputs = {
 }
 
 [sub_resource type="Resource" id="Resource_e5301"]
-script = ExtResource("3_6310v")
-condition_id = "compare_node_variable"
-target_node = NodePath(".")
-inputs = {
-"Comparison": ">",
-"Property": "node.velocity.x",
-"Value": "0"
-}
-
-[sub_resource type="Resource" id="Resource_6310v"]
 script = ExtResource("1_iqjwq")
-event_id = "on_process_physics"
-target_node = NodePath(".")
-conditions = Array[ExtResource("3_6310v")]([SubResource("Resource_e5301")])
+event_id = "on_key_pressed"
+target_node = NodePath("System")
+inputs = {
+"key": "ui_left"
+}
 actions = Array[ExtResource("2_e5301")]([SubResource("Resource_iqjwq")])
 
-[sub_resource type="Resource" id="Resource_1iq3u"]
+[sub_resource type="Resource" id="Resource_6310v"]
 script = ExtResource("2_e5301")
 action_id = "set_flip_h"
 target_node = NodePath("AnimatedSprite2D")
@@ -38,23 +30,15 @@ inputs = {
 "Value": "false"
 }
 
-[sub_resource type="Resource" id="Resource_cbhwn"]
-script = ExtResource("3_6310v")
-condition_id = "compare_node_variable"
-target_node = NodePath(".")
-inputs = {
-"Comparison": "<",
-"Property": "node.velocity.x",
-"Value": "0"
-}
-
-[sub_resource type="Resource" id="Resource_jqahe"]
+[sub_resource type="Resource" id="Resource_1iq3u"]
 script = ExtResource("1_iqjwq")
-event_id = "on_process_physics"
-target_node = NodePath(".")
-conditions = Array[ExtResource("3_6310v")]([SubResource("Resource_cbhwn")])
-actions = Array[ExtResource("2_e5301")]([SubResource("Resource_1iq3u")])
+event_id = "on_key_pressed"
+target_node = NodePath("System")
+inputs = {
+"key": "ui_right"
+}
+actions = Array[ExtResource("2_e5301")]([SubResource("Resource_6310v")])
 
 [resource]
 script = ExtResource("4_1iq3u")
-events = Array[ExtResource("1_iqjwq")]([SubResource("Resource_6310v"), SubResource("Resource_jqahe")])
+events = Array[ExtResource("1_iqjwq")]([SubResource("Resource_e5301"), SubResource("Resource_1iq3u")])
