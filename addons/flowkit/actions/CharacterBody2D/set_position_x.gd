@@ -11,7 +11,7 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "X", "type": "Float"}
+		{"name": "X", "type": "Float", "description": "The X coordinate to set the character's position to."},
 	]
 
 func get_supported_types() -> Array[String]:

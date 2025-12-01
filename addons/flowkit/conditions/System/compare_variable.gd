@@ -11,9 +11,9 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Name", "type": "String"},
-		{"name": "Comparison", "type": "String"},
-		{"name": "Value", "type": "Variant"}
+		{"name": "Name", "type": "String", "description": "The name of the variable to compare."},
+		{"name": "Comparison", "type": "String", "description": "The comparison operator to use (e.g., '==', '!=', '<', '>', '<=', '>=')."},
+		{"name": "Value", "type": "Variant", "description": "The value to compare the variable against."}
 	]
 
 func get_supported_types() -> Array[String]:

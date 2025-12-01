@@ -11,7 +11,7 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Y", "type": "Float"}
+		{"name": "Y", "type": "Float", "description": "The Y component of the velocity to set."}
 	]
 
 func get_supported_types() -> Array[String]:

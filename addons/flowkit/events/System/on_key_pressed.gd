@@ -14,7 +14,7 @@ func get_supported_types() -> Array[String]:
 
 func get_inputs() -> Array:
 	return [
-		{"name": "key", "type": "string"}
+		{"name": "key", "type": "string", "description": "The name of the key (defined in InputMap) or raw key name to monitor. If left empty, any key press will trigger the event."}
 	]
 
 func poll(node: Node, inputs: Dictionary = {}) -> bool:

@@ -11,7 +11,7 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Message", "type": "String"},
+		{"name": "Message", "type": "String", "description": "The message to print to the console."},
 	]
 
 func get_supported_types() -> Array[String]:

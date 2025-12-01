@@ -11,7 +11,7 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Volume (dB)", "type": "float"}
+		{"name": "Volume (dB)", "type": "float", "description": "The volume in decibels to set the audio player to."}
 	]
 
 func get_supported_types() -> Array[String]:

@@ -11,7 +11,7 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "One Shot", "type": "bool"}
+		{"name": "One Shot", "type": "bool", "description": "If true, the timer will only run once and then stop."}
 	]
 
 func get_supported_types() -> Array[String]:

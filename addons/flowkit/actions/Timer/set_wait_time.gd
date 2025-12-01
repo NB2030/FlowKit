@@ -11,7 +11,7 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Wait Time", "type": "float"}
+		{"name": "Wait Time", "type": "float", "description": "The wait time in seconds to set for the timer."}
 	]
 
 func get_supported_types() -> Array[String]:

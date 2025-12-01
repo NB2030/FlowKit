@@ -11,8 +11,8 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Variable Name", "type": "String"},
-		{"name": "Value", "type": "String"},
+		{"name": "Variable Name", "type": "String", "description": "The name of the variable to set."},
+		{"name": "Value", "type": "String", "description": "The value to assign to the variable."},
 	]
 
 func get_supported_types() -> Array[String]:

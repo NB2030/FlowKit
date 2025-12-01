@@ -11,9 +11,9 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "Property", "type": "String"},
-		{"name": "Comparison", "type": "String"},
-		{"name": "Value", "type": "Variant"}
+		{"name": "Property", "type": "String", "description": "The property path of the node to compare (e.g., 'position/x', 'velocity/y')."},
+		{"name": "Comparison", "type": "String", "description": "The comparison operator to use (e.g., '==', '!=', '<', '>', '<=', '>=')."},
+		{"name": "Value", "type": "Variant", "description": "The value to compare the property against."}
 	]
 
 func get_supported_types() -> Array[String]:

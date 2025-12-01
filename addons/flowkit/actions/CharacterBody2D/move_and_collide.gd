@@ -11,8 +11,8 @@ func get_name() -> String:
 
 func get_inputs() -> Array[Dictionary]:
 	return [
-		{"name": "X", "type": "Float"},
-		{"name": "Y", "type": "Float"},
+		{"name": "X", "type": "Float", "description": "The amount to move the character body along the X axis."},
+		{"name": "Y", "type": "Float", "description": "The amount to move the character body along the Y axis."},
 	]
 
 func get_supported_types() -> Array[String]:
